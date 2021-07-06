@@ -1,0 +1,62 @@
+post_install() {
+    GPDIR=opt/paloaltonetworks/globalprotect
+    LOG=$GPDIR/install.log
+
+    mkdir -m 755 -p $GPDIR && touch $LOG && chmod 644 $LOG
+
+    cp $GPDIR/gpd.service usr/lib/systemd/system/gpd.service 2>> $LOG
+    chmod +x $GPDIR/pre_exec_gps.sh 2>> $LOG
+
+    echo "gp autostart options" >> $LOG
+    mkdir -p $GPDIR/profile.d
+    mkdir -p $GPDIR/xdg/autostart
+    cp $GPDIR/PanMSInit.sh $GPDIR/profile.d/PanMSInit.sh 2>> $LOG
+    cp $GPDIR/PanGPUI.desktop $GPDIR/xdg/autostart/PanGPUI.desktop 2>> $LOG
+  
+  if [ -f $GPDIR/gp.desktop ]; then
+    chmod 644 $GPDIR/gp.desktop
+    mkdir -p $GPDIR/share/applications
+    cp $GPDIR/gp.desktop $GPDIR/share/applications/gp.desktop 2>> $LOG
+  fi
+  
+  # Remove old symbol link
+  if [ -e usr/local/bin/globalprotect ]; then
+    rm -f usr/local/bin/globalprotect
+  fi
+  
+  # create symlink for PanMSGPI
+  if [ ! -e usr/bin/globalprotect ] && [ ! -h usr/bin/globalprotect ]; then
+    echo "Create symlink for gp cli..." | tee -a $LOG
+    sudo ln -s $GPDIR/globalprotect usr/bin/globalprotect 2>> $LOG
+  fi
+}
+
+post_remove() {
+    GPDIR=opt/paloaltonetworks/globalprotect
+    LOG=$GPDIR/install.log
+
+    echo "removing GP files" >> $LOG
+
+    if [ -f usr/lib/systemd/system/gpd.service ]; then
+        rm usr/lib/systemd/system/gpd.service 2>>$LOG
+    fi
+
+    if [ -f etc/profile.d/PanMSInit.sh ]; then
+        rm etc/profile.d/PanMSInit.sh 2>>$LOG
+    fi
+
+    if [ -f etc/xdg/autostart/PanGPUI.desktop ]; then
+        rm etc/xdg/autostart/PanGPUI.desktop 2>>$LOG
+    fi
+
+    if [ -f usr/share/applications/gp.desktop ]; then
+        rm usr/share/applications/gp.desktop 2>>$LOG
+    fi
+
+    if [ -e /usr/bin/globalprotect ]; then
+        rm usr/bin/globalprotect 2>>$LOG
+    fi
+
+    mv -f $LOG var/log/gp_install.log 2>/dev/null
+    rm -r $GPDIR
+}
