@@ -1,2 +1,2 @@
 # NUGP - Northwestern's GlobalProtect VPN
-Installation scripts for Arch Linux. It doesn't work.
+Installation scripts for Arch Linux. Works sometimes...
